@@ -3,10 +3,13 @@ package br.com.letscode.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import lombok.Data;
 
 @Data
 public class PedidoEntidade {
+
     private Long id;
     private String produto;
     private BigDecimal valor;
@@ -21,4 +24,8 @@ public class PedidoEntidade {
         this.dataEntrega = dataEntrega;
         this.descricao = descricao;
     }
+
+    public PedidoEntidade() {
+    }
+
 }
