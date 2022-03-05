@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import br.com.letscode.dto.CadastrarPedidoDTO;
+import br.com.letscode.dto.RetornoCadastroPedidoDTO;
 import br.com.letscode.dto.RetornoPedidoDTO;
 import br.com.letscode.entity.PedidoEntidade;
 import br.com.letscode.repository.PedidoRepository;
@@ -21,7 +22,7 @@ public class PedidoService {
     private final PedidoRepository repository;
     private final EmailService emailService;
 
-    public void cadastrarPedido(CadastrarPedidoDTO cadastrarPedidoDTO) {
+    public RetornoCadastroPedidoDTO cadastrarPedido(CadastrarPedidoDTO cadastrarPedidoDTO) {
 
         emailService.enviar(cadastrarPedidoDTO.getEmail());
 
@@ -33,7 +34,11 @@ public class PedidoService {
         LocalDate dataEntrega = calcularDataEntrega(cadastrarPedidoDTO.getEndereco());
         entidade.setDataEntrega(dataEntrega);
 
-        repository.salvar(entidade);
+        PedidoEntidade entidadeSalva = repository.salvar(entidade);
+
+        RetornoCadastroPedidoDTO dto = fromEntidadeToRetornoCadastroPedidoDTO(entidadeSalva);
+
+        return dto;
     }
 
     public List<RetornoPedidoDTO> listarTodosOsPedidos() {
@@ -45,6 +50,29 @@ public class PedidoService {
             .collect(Collectors.toList());
 
         return listaRetorno;
+    }
+
+    public List<RetornoPedidoDTO> listarTodosOsPedidosFiltrado(String produto) {
+        List<PedidoEntidade> entidades = repository.getAll();
+
+        List<RetornoPedidoDTO> listaRetorno = entidades.stream()
+            .map(entidade -> fromEntidadeToRetornoPedidoDTO(entidade))
+            .filter(pedido -> pedido.getProduto().contains(produto))
+            .collect(Collectors.toList());
+
+        return listaRetorno;
+    }
+
+    public RetornoPedidoDTO buscarPorId(Long id) {
+
+        // busquei do banco, veio entidade
+        PedidoEntidade entidade = repository.getPorId(id);
+
+        //transformei minha entidade em dto
+        RetornoPedidoDTO dto = fromEntidadeToRetornoPedidoDTO(entidade);
+
+        // retornei o dto
+        return dto;
     }
 
     private LocalDate calcularDataEntrega(String estado) {
@@ -62,5 +90,15 @@ public class PedidoService {
         pedidoDTO.setDescricao(entidade.getDescricao());
         pedidoDTO.setValor(entidade.getValor());
         return pedidoDTO;
+    }
+
+    private RetornoCadastroPedidoDTO fromEntidadeToRetornoCadastroPedidoDTO(PedidoEntidade entidade) {
+        RetornoCadastroPedidoDTO retornoCadastroPedidoDTO = new RetornoCadastroPedidoDTO();
+        retornoCadastroPedidoDTO.setId(entidade.getId());
+        retornoCadastroPedidoDTO.setProduto(entidade.getProduto());
+        retornoCadastroPedidoDTO.setDescricao(entidade.getDescricao());
+        retornoCadastroPedidoDTO.setDataEntrega(entidade.getDataEntrega());
+        retornoCadastroPedidoDTO.setValor(entidade.getValor());
+        return retornoCadastroPedidoDTO;
     }
 }
